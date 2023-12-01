@@ -49,6 +49,8 @@ def main():
         return data
 
     data = load_data(100000)
+    # Keep the Unfiltered data for later use
+    original_data = data
 
     st.header("Where are the most people injured in NYC?")
     injured_people = st.slider(
@@ -90,7 +92,6 @@ def main():
     ))
 
     # Using plotly
-
     st.subheader("Breakdown by minute between %i:00 and %i:00" %
                  (hour, (hour + 1) % 24))
 
@@ -110,6 +111,25 @@ def main():
     # Align HTML through Caption
     st.caption(
         "<p style='text-align: right; color: grey;'>*Allow to zoom in by left click, Data Source: NYC Motor Vehicle Collisions</style>", unsafe_allow_html=True)
+
+    # Using pandas data option
+    st.header("Top 5 dangerous streets by affected type")
+    # Drop Down Menu
+    select = st.selectbox(
+        "Affected type of people", ['Pedestrians', 'Cyclists', 'Motorists'])
+
+    if select == "Pedestrians":
+        # Only injured pedestrians & Descending order & dropna for any missing data & Top 5 dangerous streets
+        st.write(original_data.query("injured_pedestrians >= 1")[[
+                 "on_street_name", "injured_pedestrians"]].sort_values(by=['injured_pedestrians'], ascending=False).dropna(how='any')[:5])
+    elif select == "Cyclists":
+        # Only injured cyclists & Descending order & dropna for any missing data & Top 5 dangerous streets
+        st.write(original_data.query("injured_cyclists >= 1")[[
+                 "on_street_name", "injured_cyclists"]].sort_values(by=['injured_cyclists'], ascending=False).dropna(how='any')[:5])
+    elif select == "Motorists":
+        # Only injured motorists & Descending order & dropna for any missing data & Top 5 dangerous streets
+        st.write(original_data.query("injured_motorists >= 1")[[
+                 "on_street_name", "injured_motorists"]].sort_values(by=['injured_motorists'], ascending=False).dropna(how='any')[:5])
 
     # Raw Data Section
     if st.checkbox("Show Raw Data", False):
