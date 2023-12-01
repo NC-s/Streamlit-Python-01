@@ -19,6 +19,7 @@ import subprocess
 import streamlit as st
 from streamlit.web import cli as stcli
 from streamlit import runtime as st_runtime
+from streamlit_jupyter import StreamlitPatcher, tqdm
 import pandas as pd
 import numpy as np
 import pydeck as pdk
@@ -31,8 +32,9 @@ DATA_URL = (
     "streamlit-demo-data/Motor_Vehicle_Collisions_-_Crashes.csv"
 )
 
+StreamlitPatcher().jupyter()  # register streamlit with jupyter-compatible wrappers
 
-# Your streamlit code
+
 def main():
     st.title("Streamlit: Caching")
     st.markdown("### The is the first dashboard")
