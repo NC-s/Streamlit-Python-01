@@ -21,12 +21,13 @@ from streamlit.web import cli as stcli
 from streamlit import runtime as st_runtime
 import pandas as pd
 import numpy as np
+import pydeck as pdk
+import plotly.express as px
 
 file_name = "app.py"
 server_port = "8502"
 DATA_URL = (
     # "https://s3-us-west-2.amazonaws.com/"
-    # "streamlit-demo-data/uber-raw-data-sep14.csv.gz"
     "streamlit-demo-data/Motor_Vehicle_Collisions_-_Crashes.csv"
 )
 
@@ -61,6 +62,54 @@ def main():
     # If we need a sidebar for the slider
     # hour = st.sidebar.slider("Hour to look at", 0, 23)
     data = data[data['date/time'].dt.hour == hour]
+
+    st.markdown("Vehicle collisions between %i:00 and %i:00" %
+                (hour, (hour + 1) % 24))
+    midpoint = (np.average(data['latitude']), np.average(data['longitude']))
+
+    st.write(pdk.Deck(
+        map_style="mapbox://styles/mapbox/light-v9",
+        initial_view_state={
+            "latitude": midpoint[0],
+            "longitude": midpoint[1],
+            "zoom": 11,
+            "pitch": 50,
+        },
+        layers=[
+            pdk.Layer(
+                "HexagonLayer",
+                data=data[['date/time', 'latitude', 'longitude']],
+                get_position=['longitude', 'latitude'],
+                radius=100,  # The size of the bar chart one the map
+                extruded=True,  # The bar chart is extruded (3D)
+                pickable=True,
+                elevation_scale=4,
+                elevation_range=[0, 1000],
+            ),
+        ],
+    ))
+
+    # Using plotly
+
+    st.subheader("Breakdown by minute between %i:00 and %i:00" %
+                 (hour, (hour + 1) % 24))
+
+    filtered = data[
+        (data['date/time'].dt.hour >=
+         hour) & (data['date/time'].dt.hour < (hour + 1))
+    ]
+
+    hist = np.histogram(
+        filtered['date/time'].dt.minute, bins=60, range=(0, 60))[0]  # 60 Minutes for an hour
+    # Crashes data from histogram
+    chart_data = pd.DataFrame({'minute': range(60), 'crashes': hist})
+    fig = px.bar(chart_data, x='minute', y='crashes',
+                 hover_data=['minute', 'crashes'], height=400)
+    st.write(fig)
+
+    # Align HTML through Caption
+    st.caption(
+        "<p style='text-align: right; color: grey;'>*Allow to zoom in by left click, Data Source: NYC Motor Vehicle Collisions</style>", unsafe_allow_html=True)
 
     # Raw Data Section
     if st.checkbox("Show Raw Data", False):
